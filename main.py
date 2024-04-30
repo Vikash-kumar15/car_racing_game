@@ -140,5 +140,90 @@ while running:
         
     # draw the player's car
     player_group.draw(screen)
+
+    # add a vehicle
+    if len(vehicle_group) < 2:
+        # ensure there's enough gap between vehicles
+        add_vehicle = True
+        for vehicle in vehicle_group:
+            if vehicle.rect.top < vehicle.rect.height * 1.5:
+                add_vehicle = False
+                
+        if add_vehicle:
+            # select a random lane
+            lane = random.choice(lanes)
+            
+            # select a random vehicle image
+            image = random.choice(vehicle_images)
+            vehicle = Vehicle(image, lane, -100)
+            vehicle_group.add(vehicle)
+    
+    # draw the vehicles
+    vehicle_group.draw(screen)
+
+    # make the vehicles move
+    for vehicle in vehicle_group:
+        vehicle.rect.y += speed
+
+        # remove vehicle once it goes off screen
+        if vehicle.rect.top >= window_height:
+            vehicle.kill()
+            
+            # add to score
+            score += 1
+            
+            # speed up the game after passing 7 vehicles
+            if score > 0 and score % 7 == 0:
+                speed += 3
+    
+    # display the score
+    font = pygame.font.Font(pygame.font.get_default_font(), 16)
+    text = font.render('Score: ' + str(score), True, white)
+    text_rect = text.get_rect()
+    text_rect.center = (50, 400)
+    screen.blit(text, text_rect)
+    
+    # check if there's a head-on collision
+    if pygame.sprite.spritecollide(player_car, vehicle_group, True):
+        is_game_over = True
+        crash_rect.center = [player_car.rect.center[0], player_car.rect.top]
+            
+    # display game over
+    if is_game_over:
+        screen.blit(crash_image, crash_rect)
+        pygame.draw.rect(screen, red, (95, 50, 310, 100))
+        font = pygame.font.Font(pygame.font.get_default_font(), 17)
+        text = font.render('Game over. Play again? (Enter Y or N)', True, black)
+        text_rect = text.get_rect()
+        text_rect.center = (window_width / 2, 100)
+        screen.blit(text, text_rect)
+            
+    pygame.display.update()
+
+    # wait for user's input to play again or exit
+    while is_game_over:
+        clock.tick(fps)
+        
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                is_game_over = False
+                running = False
+                
+            # get the user's input (y or n)
+            if event.type == KEYDOWN:
+                if event.key == K_y:
+                    # reset the game
+                    is_game_over = False
+                    speed = 2
+                    score = 0
+                    vehicle_group.empty()
+                    player_car.rect.center = [player_x, player_y]
+                elif event.key == K_n:
+                    # exit the loops
+                    is_game_over = False
+                    running = False
+
+pygame.quit()
+
     
     
